@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HarvestTable — Multi-Modal Restaurant Recommendations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">HarvestTable</span>
+      </div>
+      <nav class="nav">
+        <a href="#how">Guide</a>
+        <a href="https://github.com" target="_blank" rel="noopener">Blog</a>
+      </nav>
+    </header>
+
+    <!-- Hero / onboarding -->
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="pill">FRESH PICKS</span>
+        <h1>Eat well, eat local,<br />eat joyfully</h1>
+        <p class="lede">Tell us what you crave — our multi-modal recommender fuses
+          review text, food photos, and place attributes to find your table.</p>
+      </div>
+
+      <form id="onboarding" class="onboarding">
+        <div class="field">
+          <label>What are you in the mood for?</label>
+          <div id="cuisines" class="chips" role="group" aria-label="Cuisines"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="price">Price</label>
+            <div id="price" class="price-toggle" role="group" aria-label="Price"></div>
+          </div>
+          <div class="field grow">
+            <label for="city">City</label>
+            <select id="city">
+              <option value="">Anywhere</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submit">Find restaurants</button>
+        <p class="hint" id="hint">Pick one or more cuisines to get started.</p>
+      </form>
+    </section>
+
+    <!-- Results -->
+    <section class="results" id="resultsSection" hidden>
+      <div class="results-head">
+        <h2 id="resultsTitle">Fresh picks for you</h2>
+        <p class="results-sub" id="resultsSub"></p>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><i class="sw sw-text"></i>Review text</span>
+        <span class="legend-item"><i class="sw sw-image"></i>Food imagery</span>
+        <span class="legend-item"><i class="sw sw-struct"></i>Attributes</span>
+        <span class="legend-note">— why each place was matched (modality fusion)</span>
+      </div>
+      <div id="grid" class="grid"></div>
+    </section>
+
+    <!-- How it works -->
+    <section class="how" id="how">
+      <h3>How it works</h3>
+      <div class="how-grid">
+        <div class="how-card">
+          <span class="how-num">1</span>
+          <h4>Three modalities</h4>
+          <p>DistilBERT reads reviews, ResNet18 sees the food, a structured encoder
+             handles cuisine · price · location.</p>
+        </div>
+        <div class="how-card">
+          <span class="how-num">2</span>
+          <h4>Late fusion</h4>
+          <p>Each modality is normalized and concatenated, then a hybrid MLP ranker
+             fuses it with collaborative-filtering signals.</p>
+        </div>
+        <div class="how-card">
+          <span class="how-num">3</span>
+          <h4>Cold start</h4>
+          <p>Brand-new diners are served from onboarding preferences alone — no
+             interaction history required.</p>
+        </div>
+      </div>
+      <div class="existing">
+        <span>Already have a profile?</span>
+        <input type="number" id="userId" min="0" placeholder="user id" />
+        <button class="btn-ghost" id="userBtn">Get my picks</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Multi-Modal Restaurant Recommendation System · synthetic demo data
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

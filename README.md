@@ -70,6 +70,33 @@ tests/test_smoke.py
 ```
 
 
+## Web app
+
+A small **FastAPI** service wraps the inference pipeline and serves a single-page
+frontend (`frontend/`) styled as *HarvestTable*. The heavy inference state
+(artifacts + frozen-encoder features) is built **once** at startup and reused
+across requests.
+
+```bash
+pip install -e ".[web]"        # or: pip install fastapi "uvicorn[standard]"
+uvicorn restaurant_rec.api:app --reload
+# open http://localhost:8000
+```
+
+The onboarding form (cuisine / price / city) demonstrates **cold-start** end to
+end, and every recommendation card shows a per-modality **"why" breakdown**
+(review text · food imagery · attributes) — the cosine contribution of each
+fused modality block, making the late-fusion idea visible.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET  /api/options`        | form vocabulary (cuisines, cities, price bands) |
+| `POST /api/recommend/cold` | onboarding preferences → cold-start recs |
+| `POST /api/recommend/user` | existing user id → warm recs |
+
+(The form vocabulary is derived from the loaded dataset, so it tracks whatever
+data is in `data/`.)
+
 ## Results (default config: 300 restaurants, 1.5k users, 20k interactions)
 
 **Model comparison — fusion wins** (warm users, held-out interactions):

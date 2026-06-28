@@ -21,6 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 notebook = ["matplotlib>=3.8", "jupyter"]
+web = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
