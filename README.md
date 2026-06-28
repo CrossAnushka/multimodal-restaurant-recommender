@@ -69,45 +69,6 @@ notebooks/walkthrough.ipynb
 tests/test_smoke.py
 ```
 
-## Setup
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e .          # or: pip install -r requirements.txt
-```
-
-Requires Python ≥ 3.10. First run downloads DistilBERT (~270 MB) and ResNet18 (~45 MB)
-once; all embeddings are then cached under `artifacts/`.
-
-## Usage
-
-Run the whole pipeline end to end:
-
-```bash
-python -m restaurant_rec.cli all      # generate → embeddings → train → evaluate
-```
-
-…or step by step:
-
-```bash
-python -m restaurant_rec.cli generate-data       # synthetic CSVs + food images → data/
-python -m restaurant_rec.cli build-embeddings     # cache DistilBERT + ResNet features
-python -m restaurant_rec.cli train                # CF, ranker, cold-start models
-python -m restaurant_rec.cli evaluate             # metrics + ablations + cold-start
-```
-
-Get recommendations:
-
-```bash
-# existing user
-python -m restaurant_rec.cli recommend --user-id 5 --k 8
-
-# brand-new (cold) user, described only by preferences
-python -m restaurant_rec.cli recommend --cold --cuisines Italian,Japanese --price 2 --city Bayport
-```
-
-The annotated walkthrough lives in [`notebooks/walkthrough.ipynb`](notebooks/walkthrough.ipynb)
-(`pip install jupyter matplotlib` to run it).
 
 ## Results (default config: 300 restaurants, 1.5k users, 20k interactions)
 
@@ -146,15 +107,4 @@ where hidden factors drive the ratings and each modality surfaces a different sl
 This is exactly why content-based filtering beats any single modality, and the hybrid
 (adding the CF-only latent residual) beats content alone.
 
-## Swapping in real data
 
-The synthetic generator is a drop-in stand-in. To use real data, replace the CSVs in
-`data/` (matching the schema in `data/schema.py`) and the images at
-`data/images/rest_XXXX.png` (paths are stored in `restaurants.csv`), then rerun
-`build-embeddings` onward. No model code changes are needed.
-
-## Tests
-
-```bash
-pytest -q          # fast smoke tests (no model downloads needed)
-```
