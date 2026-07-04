@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HarvestTable — Multi-Modal Restaurant Recommendations</title>
+  <title>Restaurant Recommendation System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet" />
@@ -15,11 +15,16 @@
     <header class="topbar">
       <div class="brand">
         <span class="brand-dot"></span>
-        <span class="brand-name">HarvestTable</span>
+        <span class="brand-name">Restaurant Recommendation System</span>
       </div>
       <nav class="nav">
         <a href="#how">Guide</a>
-        <a href="https://github.com" target="_blank" rel="noopener">Blog</a>
+        <button type="button" class="nav-btn" id="savedBtn" aria-pressed="false">
+          ♥ Saved <span class="saved-count" id="savedCount">0</span>
+        </button>
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <span class="theme-icon">🌙</span>
+        </button>
       </nav>
     </header>
 
@@ -27,7 +32,7 @@
     <section class="hero">
       <div class="hero-copy">
         <span class="pill">FRESH PICKS</span>
-        <h1>Eat well, eat local,<br />eat joyfully</h1>
+        <h1>Recommendations<br />that actually fit</h1>
         <p class="lede">Tell us what you crave — our multi-modal recommender fuses
           review text, food photos, and place attributes to find your table.</p>
       </div>
@@ -62,6 +67,40 @@
         <h2 id="resultsTitle">Fresh picks for you</h2>
         <p class="results-sub" id="resultsSub"></p>
       </div>
+
+      <!-- Toolbar: search / sort / filters -->
+      <div class="toolbar" id="toolbar">
+        <input type="search" id="searchBox" class="search-box"
+               placeholder="Search by name, cuisine, city…" aria-label="Search results" />
+        <label class="tool-select">
+          <span>Sort</span>
+          <select id="sortBy">
+            <option value="score">Best match</option>
+            <option value="rating">Top rated</option>
+            <option value="price_asc">Price: low → high</option>
+            <option value="price_desc">Price: high → low</option>
+            <option value="name">Name (A–Z)</option>
+          </select>
+        </label>
+        <label class="tool-select">
+          <span>Min rating</span>
+          <select id="minRating">
+            <option value="0">Any</option>
+            <option value="3">3.0+</option>
+            <option value="3.5">3.5+</option>
+            <option value="4">4.0+</option>
+            <option value="4.5">4.5+</option>
+          </select>
+        </label>
+        <label class="tool-check">
+          <input type="checkbox" id="filterVeg" /> Vegetarian-friendly
+        </label>
+        <label class="tool-check">
+          <input type="checkbox" id="filterOpen" /> Open now
+        </label>
+        <span class="result-count" id="resultCount"></span>
+      </div>
+
       <div class="legend">
         <span class="legend-item"><i class="sw sw-text"></i>Review text</span>
         <span class="legend-item"><i class="sw sw-image"></i>Food imagery</span>
@@ -94,6 +133,14 @@
              interaction history required.</p>
         </div>
       </div>
+
+      <!-- Sample food-image gallery (the image modality in action) -->
+      <div class="gallery-head">
+        <h4>The image modality, up close</h4>
+        <p>ResNet18 turns each of these food photos into a 512-d style vector.</p>
+      </div>
+      <div class="gallery" id="gallery"></div>
+
       <div class="existing">
         <span>Already have a profile?</span>
         <input type="number" id="userId" min="0" placeholder="user id" />
@@ -105,6 +152,17 @@
       Multi-Modal Restaurant Recommendation System · synthetic demo data
     </footer>
   </div>
+
+  <!-- Card detail modal -->
+  <div class="modal-overlay" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalName">
+      <button type="button" class="modal-close" id="modalClose" aria-label="Close">×</button>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast host -->
+  <div class="toast-host" id="toasts" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>

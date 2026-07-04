@@ -34,7 +34,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .config import CONFIG, IMAGE_DIR, PRICE_BANDS
+from .config import CONFIG, IMAGE_DIR, PRICE_BANDS, REVIEWS_CSV
 from .data import schema as S
 from .fusion.late_fusion import MODALITIES
 from .models.content import profile_from_cuisines
@@ -55,9 +55,28 @@ class _Ctx:
     block_slices: dict[str, tuple[int, int]]
     cuisines: list[dict]   # [{name, count}] sorted by frequency desc
     cities: list[str]
+    review_samples: dict[int, str]   # restaurant_id -> representative review text
 
 
 CTX = _Ctx()
+
+# Cuisines that reliably offer strong vegetarian options. The synthetic dataset
+# has no explicit dietary column, so we derive a `veg_friendly` flag from cuisine
+# to power the frontend's vegetarian filter (demo heuristic, not ground truth).
+VEG_FRIENDLY_CUISINES = {
+    "Indian", "Mediterranean", "Greek", "Italian", "Thai",
+    "Chinese", "Vietnamese", "Mexican", "Korean",
+}
+
+
+def _open_now(restaurant_id: int) -> bool:
+    """Deterministic pseudo "open now" flag (~70% open).
+
+    The dataset carries no opening-hours field; this gives the frontend's
+    open-now filter a stable, per-restaurant value to filter on for the demo.
+    """
+
+    return (restaurant_id * 2654435761) % 100 < 70
 
 
 def _build_ctx() -> None:
@@ -81,7 +100,26 @@ def _build_ctx() -> None:
     vc = rest[S.REST_CUISINE].value_counts()
     CTX.cuisines = [{"name": str(c), "count": int(n)} for c, n in vc.items()]
     CTX.cities = sorted(str(c) for c in rest[S.REST_CITY].unique())
+    CTX.review_samples = _load_review_samples()
     CTX.state = state
+
+
+def _load_review_samples() -> dict[int, str]:
+    """One representative listing review per restaurant (highest-rated, longest).
+
+    Surfaced in the card detail modal so a diner can read *why* a place matched
+    in human terms alongside the modality breakdown.
+    """
+
+    if not REVIEWS_CSV.exists():
+        return {}
+    reviews = pd.read_csv(REVIEWS_CSV)
+    reviews = reviews.dropna(subset=[S.REVIEW_TEXT])
+    reviews["_len"] = reviews[S.REVIEW_TEXT].str.len()
+    # Prefer the top-rated review; break ties by the more descriptive (longer) text.
+    reviews = reviews.sort_values([S.REVIEW_RATING, "_len"], ascending=False)
+    best = reviews.drop_duplicates(subset=[S.REVIEW_REST_ID], keep="first")
+    return {int(r): str(t) for r, t in zip(best[S.REVIEW_REST_ID], best[S.REVIEW_TEXT])}
 
 
 @asynccontextmanager
@@ -124,14 +162,24 @@ def _results(df: pd.DataFrame, breakdown: list[dict]) -> list[dict]:
     items = []
     for (_, row), why in zip(df.iterrows(), breakdown):
         rid = int(row["restaurant_id"])
-        img = str(rest.loc[rid, S.REST_IMAGE]).lstrip("/")
+        meta = rest.loc[rid]
+        img = str(meta[S.REST_IMAGE]).lstrip("/")
+        avg = meta[S.REST_AVG_RATING]
+        cuisine = str(row["cuisine"])
         items.append({
             "restaurant_id": rid,
             "name": row["name"],
-            "cuisine": row["cuisine"],
+            "cuisine": cuisine,
             "price": row["price"],                       # "$".."$$$$"
             "price_band": len(str(row["price"])),
             "city": row["city"],
+            "neighborhood": str(meta[S.REST_NEIGHBORHOOD]),
+            "description": str(meta[S.REST_DESCRIPTION]),
+            "avg_rating": None if pd.isna(avg) else round(float(avg), 2),
+            "num_reviews": int(meta[S.REST_NUM_REVIEWS]),
+            "review": CTX.review_samples.get(rid),
+            "veg_friendly": cuisine in VEG_FRIENDLY_CUISINES,
+            "open_now": _open_now(rid),
             "score": float(row["score"]),
             "cold_item": bool(row["cold_item"]),
             "image_url": f"/{img}",
