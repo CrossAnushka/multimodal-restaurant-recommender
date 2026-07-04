@@ -73,9 +73,9 @@ tests/test_smoke.py
 ## Web app
 
 A small **FastAPI** service wraps the inference pipeline and serves a single-page
-frontend (`frontend/`) styled as *HarvestTable*. The heavy inference state
-(artifacts + frozen-encoder features) is built **once** at startup and reused
-across requests.
+frontend (`frontend/`, vanilla HTML/CSS/JS — no build step). The heavy inference
+state (artifacts + frozen-encoder features) is built **once** at startup and
+reused across requests.
 
 ```bash
 pip install -e ".[web]"        # or: pip install fastapi "uvicorn[standard]"
@@ -88,11 +88,30 @@ end, and every recommendation card shows a per-modality **"why" breakdown**
 (review text · food imagery · attributes) — the cosine contribution of each
 fused modality block, making the late-fusion idea visible.
 
+**Frontend features:**
+
+* **Search, sort & filter** results in place — by name/cuisine/city, sorted by
+  match / rating / price / name, filtered by minimum rating, vegetarian-friendly,
+  or open-now.
+* **Favorites** — save any card (♥); persisted to `localStorage` with a dedicated
+  **Saved** view.
+* **Persisted last search** — selected cuisines / price / city are restored on reload.
+* **Card detail modal** — larger image, description, a representative review, the full
+  "why" breakdown, and **More like this** (re-queries by that place's cuisine + price).
+* **Interactive "why" tooltips**, **skeleton loaders**, **toast** notifications, and a
+  **dark-mode** toggle (respects `prefers-color-scheme`).
+
 | Endpoint | Purpose |
 |----------|---------|
 | `GET  /api/options`        | form vocabulary (cuisines, cities, price bands) |
 | `POST /api/recommend/cold` | onboarding preferences → cold-start recs |
 | `POST /api/recommend/user` | existing user id → warm recs |
+
+Each recommendation carries `name`, `cuisine`, `price`, `city`, `neighborhood`,
+`description`, `avg_rating`, `num_reviews`, a representative `review`, the modality
+`why` breakdown, and `veg_friendly` / `open_now` flags. The vegetarian and open-now
+flags are **demo heuristics** (derived from cuisine and a deterministic per-restaurant
+value) since the synthetic dataset carries no dietary or opening-hours columns.
 
 (The form vocabulary is derived from the loaded dataset, so it tracks whatever
 data is in `data/`.)
